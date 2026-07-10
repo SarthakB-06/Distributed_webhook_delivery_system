@@ -1,0 +1,16 @@
+# Dependency directories
+node_modules/
+dist/
+build/
+
+# Environment variables (NEVER commit your .env files!)
+.env
+.env.*
+
+# Logs
+logs
+*.log
+
+# Prisma and Docker cache
+.prisma/
+.docker/

@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # 1. The Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: webhook_user
+      POSTGRES_PASSWORD: webhook_password
+      POSTGRES_DB: webhook_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. The Message Queue
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  # 3. The Write Path (Ingestion)
+  ingestion-api:
+    build: ./webhook_ingestion_api
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://webhook_user:webhook_password@postgres:5432/webhook_platform?schema=public
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+
+  # 4. The Read Path (Query)
+  query-api:
+    build: ./webhook_query_api
+    ports:
+      - "4000:4000"
+    environment:
+      - DATABASE_URL=postgresql://webhook_user:webhook_password@postgres:5432/webhook_platform?schema=public
+    depends_on:
+      - postgres
+
+  # 5. The Background Worker
+  dispatch-worker:
+    build: ./webhook_dispatch_worker
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+
+  # 6. The UI
+  dashboard:
+    build: ./webhook_dashboard
+    ports:
+      - "5173:80" 
+
+
+volumes:
+  postgres_data:

@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  createdAt DateTime   @default(now()) @map("created_at")
+  apiKeys   ApiKey[]
+  endpoints Endpoint[]
+  events    Event[]
+
+  @@map("tenants")
+}
+
+model ApiKey {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  keyHash   String   @map("key_hash")
+  createdAt DateTime @default(now()) @map("created_at")
+  revoked   Boolean  @default(false)
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@map("api_keys")
+}
+
+model Endpoint {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  url         String
+  secret      String
+  eventTypes  String[] @map("event_types")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  deliveries  Delivery[]
+
+  @@map("endpoints")
+}
+
+model Event {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  eventType      String   @map("event_type")
+  payload        Json
+  idempotencyKey String?  @map("idempotency_key")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  tenant         Tenant   @relation(fields: [tenantId], references: [id])
+  deliveries     Delivery[]
+
+  @@unique([tenantId, idempotencyKey])
+  @@index([tenantId, eventType])
+  @@map("events")
+}
+
+model Delivery {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventId       String    @map("event_id") @db.Uuid
+  endpointId    String    @map("endpoint_id") @db.Uuid
+  status        String    @default("pending")
+  attemptCount  Int       @default(0) @map("attempt_count")
+  nextRetryAt   DateTime? @map("next_retry_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  event         Event     @relation(fields: [eventId], references: [id])
+  endpoint      Endpoint  @relation(fields: [endpointId], references: [id])
+  attempts      DeliveryAttempt[]
+
+  @@index([status])
+  @@index([nextRetryAt]) // Useful for the Dispatch Worker polling
+  @@map("deliveries")
+}
+
+model DeliveryAttempt {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  deliveryId     String   @map("delivery_id") @db.Uuid
+  attemptNumber  Int      @map("attempt_number")
+  responseStatus Int?     @map("response_status")
+  responseBody   String?  @map("response_body")
+  errorMessage   String?  @map("error_message")
+  durationMs     Int?     @map("duration_ms")
+  attemptedAt    DateTime @default(now()) @map("attempted_at")
+
+  delivery       Delivery @relation(fields: [deliveryId], references: [id])
+
+  @@map("delivery_attempts")
+}
