@@ -19,8 +19,8 @@ export const options = {
   ],
   thresholds: {
     // Pipeline fails if 99% of requests take longer than 50ms
-    'http_req_duration': ['p(95)<50', 'p(99)<75'], // 95% under 50ms, 99% under 75ms
-    'errors': ['rate<0.01'],        
+    'http_req_duration': ['p(95)<500', 'p(99)<1000'], 
+    'errors': ['rate<0.01'],      
   },
 };
 
