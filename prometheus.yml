@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 5s 
+
+scrape_configs:
+  - job_name: 'ingestion-api'
+    static_configs:
+      # We use the internal Docker Compose service name and port
+      - targets: ['ingestion-api:3000']

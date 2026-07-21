@@ -1,0 +1,41 @@
+name: Distributed Platform CI 
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  
+
+jobs: 
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Compose 
+      run: |
+        docker compose up -d --build
+        echo "Waiting for services to be intialized.."
+        sleep 15
+
+    - name: Check Container Health
+      run: |
+        docker compose ps
+        curl -f http://localhost:3000/metrics || exit 1
+    
+    - name: Install k6
+      run: |
+        sudo apt-get update
+        sudo snap install k6
+    
+    - name: Run load test with k6
+      run: |
+        k6 run tests/load_tests.js
+
+    - name: Capture logs
+      if: failure()
+      run: docker compose logs --tail=100
+      
