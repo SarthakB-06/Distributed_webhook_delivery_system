@@ -50,7 +50,7 @@ export default function () {
   const res = http.post(`${BASE_URL}/events`, payload, params);
   const duration = new Date() - startTime;
   if (res.status !== 200 && res.status !== 202) {
-    console.log(`[API Error ${res.status}]: ${res.body}`);  
+    // console.log(`[API Error ${res.status}]: ${res.body}`);  
   }
   // Record metrics
   ingestionLatency.add(duration);

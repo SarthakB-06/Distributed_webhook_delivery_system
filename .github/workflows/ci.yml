@@ -38,6 +38,7 @@ jobs:
     - name: Seed Database for Load Test
       run: |
         docker compose exec -T postgres psql -U webhook_user -d webhook_platform -c "INSERT INTO tenants (id, name, created_at) VALUES ('b3b8c386-8809-407b-8919-72c1cbaea15e', 'CI Load Test Tenant', NOW()) ON CONFLICT DO NOTHING;"    
+        docker compose exec -T postgres psql -U webhook_user -d webhook_platform -c "INSERT INTO endpoints (id, tenant_id, url, secret, created_at) VALUES ('c4c9d497-9910-518c-9020-83d2dcbfa26f', 'b3b8c386-8809-407b-8919-72c1cbaea15e', 'https://httpstat.us/200', 'test_secret', NOW()) ON CONFLICT DO NOTHING;"
     
     - name: Run load test with k6
       run: |
