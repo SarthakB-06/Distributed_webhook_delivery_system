@@ -7,7 +7,7 @@ export const errorRate = new Rate('errors');
 export const ingestionLatency = new Trend('ingestion_latency_ms');
 
 // Hardcoded Tenant ID from your database
-const TENANT_ID = '11111111-1111-1111-1111-111111111111';
+const TENANT_ID = 'b3b8c386-8809-407b-8919-72c1cbaea15e';
 const BASE_URL = 'http://localhost:3000';
 
 export const options = {
